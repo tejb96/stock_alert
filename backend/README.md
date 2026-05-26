@@ -70,6 +70,7 @@ APEWISDOM_ENABLED=true
 | `APEWISDOM_ALERT_CHANGE_24H` | `100` | Alert: 24h % change threshold |
 | `APEWISDOM_ALERT_SCORE_THRESHOLD` | `150` | Alert: trend score threshold (OR) |
 | `APEWISDOM_ALERT_COOLDOWN_HOURS` | `6` | Per-ticker alert cooldown |
+| `APEWISDOM_ALERT_MAX_PER_CYCLE` | `3` | Max tickers per Discord message (highest trend score) |
 | `APEWISDOM_DAILY_SUMMARY_HOUR_UTC` | `21` | Daily Discord summary hour (UTC) |
 | `APEWISDOM_HISTORY_DAYS` | `60` | Snapshot retention |
 | `APEWISDOM_TOP_N` | `50` | Symbols stored per fetch |
@@ -87,7 +88,7 @@ A symbol must have `mentions >= APEWISDOM_MIN_MENTIONS`, then triggers if **eith
 - `mentions >= APEWISDOM_ALERT_MENTIONS` **and** `change_24h >= APEWISDOM_ALERT_CHANGE_24H`
 - `trend_score >= APEWISDOM_ALERT_SCORE_THRESHOLD`
 
-Alerts use time-based cooldown (not ratio armed/disarmed).
+Alerts use time-based cooldown (not ratio armed/disarmed). Each poll sends **one** Discord message with up to `APEWISDOM_ALERT_MAX_PER_CYCLE` tickers (default 3), ranked by trend score among symbols that pass cooldown.
 
 ### Tests
 

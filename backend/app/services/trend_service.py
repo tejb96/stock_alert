@@ -107,14 +107,41 @@ def _format_change(change_24h: float | None) -> str:
     return f"{sign}{change_24h:.1f}%"
 
 
-def build_alert_message(candidate: AlertCandidate) -> str:
+def _format_alert_block(index: int, candidate: AlertCandidate) -> str:
     return (
-        f"**Trend alert: {candidate.ticker}**\n"
-        f"Rank #{candidate.rank} · Mentions **{candidate.mentions}** · "
-        f"24h change **{_format_change(candidate.change_24h)}**\n"
-        f"Upvotes **{candidate.upvotes}** · Trend score **{candidate.trend_score:.1f}**\n"
-        f"Source: apewisdom · Trigger: {candidate.reason}"
+        f"**{index}. {candidate.ticker}** · Rank #{candidate.rank}\n"
+        f"Mentions: **{candidate.mentions}** · 24h change: **{_format_change(candidate.change_24h)}**\n"
+        f"Upvotes: **{candidate.upvotes}** · Trend score: **{candidate.trend_score:.1f}**\n"
+        f"Trigger: {candidate.reason}"
     )
+
+
+def select_top_alert_candidates(
+    candidates: list[AlertCandidate],
+    *,
+    max_count: int,
+) -> list[AlertCandidate]:
+    if max_count <= 0:
+        return []
+    ranked = sorted(candidates, key=lambda c: c.trend_score, reverse=True)
+    return ranked[:max_count]
+
+
+def build_batch_alert_message(
+    candidates: list[AlertCandidate],
+    *,
+    polled_at: datetime | None = None,
+) -> str:
+    when = polled_at or datetime.now(UTC)
+    if when.tzinfo is None:
+        when = when.replace(tzinfo=UTC)
+    else:
+        when = when.astimezone(UTC)
+
+    count = len(candidates)
+    header = f"**Trend alerts** (top {count} · apewisdom)\n{when.strftime('%Y-%m-%d %H:%M')} UTC"
+    blocks = [_format_alert_block(i, c) for i, c in enumerate(candidates, start=1)]
+    return header + "\n\n" + "\n\n".join(blocks)
 
 
 def _top_by(rows: list[EnrichedTrend], key: str, n: int = 5) -> list[EnrichedTrend]:

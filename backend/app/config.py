@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     apewisdom_alert_change_24h: float = 100.0
     apewisdom_alert_score_threshold: float = 150.0
     apewisdom_alert_cooldown_hours: int = 6
+    apewisdom_alert_max_per_cycle: int = 3
     apewisdom_daily_summary_hour_utc: int = 21
     apewisdom_history_days: int = 60
     apewisdom_top_n: int = 50

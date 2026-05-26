@@ -29,6 +29,7 @@ async def _send_alerts(session: AsyncSession, enriched: list[trend_service.Enric
     candidates = trend_service.evaluate_alerts(enriched, settings)
     now = datetime.now(UTC)
 
+    ready: list[trend_service.AlertCandidate] = []
     for candidate in candidates:
         elapsed = await trend_repository.cooldown_elapsed(
             session,
@@ -37,15 +38,25 @@ async def _send_alerts(session: AsyncSession, enriched: list[trend_service.Enric
             cooldown_hours=settings.apewisdom_alert_cooldown_hours,
             now=now,
         )
-        if not elapsed:
-            continue
+        if elapsed:
+            ready.append(candidate)
 
-        try:
-            await notifier.send_discord_content(trend_service.build_alert_message(candidate))
-        except notifier.NotifierError:
-            logger.exception("Failed to send trend alert for %s", candidate.ticker)
-            continue
+    to_send = trend_service.select_top_alert_candidates(
+        ready,
+        max_count=settings.apewisdom_alert_max_per_cycle,
+    )
+    if not to_send:
+        return
 
+    try:
+        await notifier.send_discord_content(
+            trend_service.build_batch_alert_message(to_send, polled_at=now)
+        )
+    except notifier.NotifierError:
+        logger.exception("Failed to send trend alerts")
+        return
+
+    for candidate in to_send:
         await trend_repository.set_last_alert_at(
             session,
             ticker=candidate.ticker,
