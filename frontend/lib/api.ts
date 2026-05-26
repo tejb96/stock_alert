@@ -1,4 +1,11 @@
-import type { Alert, AlertCreate, AlertUpdate, Health, Ratio } from "@/lib/types";
+import type {
+  Alert,
+  AlertCreate,
+  AlertUpdate,
+  Health,
+  Ratio,
+  TickerTrend,
+} from "@/lib/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
 
@@ -101,4 +108,10 @@ export async function testAlert(id: number): Promise<void> {
   await request<{ status: string }>(`/alerts/${id}/test`, {
     method: "POST",
   });
+}
+
+export async function getTickerTrends(
+  options?: FetchOptions,
+): Promise<TickerTrend[]> {
+  return request<TickerTrend[]>("/ticker-trends", { signal: options?.signal });
 }

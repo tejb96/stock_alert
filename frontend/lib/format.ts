@@ -60,3 +60,32 @@ export function distanceToThreshold(
 
   return best?.text ?? null;
 }
+
+export function formatMentions(value: number): string {
+  return value.toLocaleString("en-US");
+}
+
+export function formatUpvotes(value: number): string {
+  return value.toLocaleString("en-US");
+}
+
+export function formatPercentChange(value: number | null): string {
+  if (value === null) return "n/a";
+  const sign = value >= 0 ? "+" : "";
+  return `${sign}${value.toFixed(1)}%`;
+}
+
+export function formatTrendScore(value: number): string {
+  return value.toFixed(1);
+}
+
+export type TrendChangeVariant = "positive" | "negative" | "muted";
+
+export function trendChangeVariant(
+  change: number | null,
+): TrendChangeVariant {
+  if (change === null) return "muted";
+  if (change >= 100) return "positive";
+  if (change < 0) return "negative";
+  return "muted";
+}

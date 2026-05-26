@@ -39,3 +39,21 @@ export type Health = {
 };
 
 export type DashboardStatus = "loading" | "ready" | "error";
+
+export type TickerTrend = {
+  ticker: string;
+  rank: number;
+  mentions: number;
+  change_24h: number | null;
+  upvotes: number;
+  trend_score: number;
+};
+
+export type TrendSortKey =
+  | "rank"
+  | "mentions"
+  | "change_24h"
+  | "upvotes"
+  | "trend_score";
+
+export type TrendsStatus = "loading" | "ready" | "error";

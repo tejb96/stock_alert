@@ -44,3 +44,55 @@ curl -X POST http://127.0.0.1:8000/alerts \
 4. **Re-arms** when the condition becomes false (e.g. ratio drops below 80), so the next cross can notify again.
 
 Poll interval defaults to **60 seconds** (`POLL_INTERVAL_SECONDS`).
+
+## ApeWisdom trend detection
+
+Optional pipeline that polls [ApeWisdom](https://apewisdom.io) stock mention rankings, stores historical snapshots (60 days), scores trends, sends Discord alerts, and posts a daily summary at **21:00 UTC**.
+
+Enable in `.env`:
+
+```bash
+APEWISDOM_ENABLED=true
+```
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/ticker-trends` | Latest top tickers with trend scores (empty when disabled) |
+
+### Environment variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `APEWISDOM_ENABLED` | `false` | Start trend fetch loop |
+| `APEWISDOM_FETCH_INTERVAL_MINUTES` | `60` | Fetch interval |
+| `APEWISDOM_MIN_MENTIONS` | `20` | Minimum mentions for ranking/API |
+| `APEWISDOM_ALERT_MENTIONS` | `50` | Alert: mentions threshold |
+| `APEWISDOM_ALERT_CHANGE_24H` | `100` | Alert: 24h % change threshold |
+| `APEWISDOM_ALERT_SCORE_THRESHOLD` | `150` | Alert: trend score threshold (OR) |
+| `APEWISDOM_ALERT_COOLDOWN_HOURS` | `6` | Per-ticker alert cooldown |
+| `APEWISDOM_DAILY_SUMMARY_HOUR_UTC` | `21` | Daily Discord summary hour (UTC) |
+| `APEWISDOM_HISTORY_DAYS` | `60` | Snapshot retention |
+| `APEWISDOM_TOP_N` | `50` | Symbols stored per fetch |
+
+### Trend score
+
+`mentions * (1 + max(change_24h, 0) / 100)` — computed on read, not stored.
+
+`change_24h` is `((mentions - mentions_24h_ago) / mentions_24h_ago) * 100` when `mentions_24h_ago > 0`, otherwise `null`.
+
+### Alert rules
+
+A symbol must have `mentions >= APEWISDOM_MIN_MENTIONS`, then triggers if **either**:
+
+- `mentions >= APEWISDOM_ALERT_MENTIONS` **and** `change_24h >= APEWISDOM_ALERT_CHANGE_24H`
+- `trend_score >= APEWISDOM_ALERT_SCORE_THRESHOLD`
+
+Alerts use time-based cooldown (not ratio armed/disarmed).
+
+### Tests
+
+```bash
+cd backend
+uv sync --group dev
+uv run pytest
+```

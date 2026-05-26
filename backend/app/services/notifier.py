@@ -8,6 +8,20 @@ class NotifierError(Exception):
     pass
 
 
+async def send_discord_content(content: str) -> None:
+    if not settings.discord_webhook_url:
+        raise NotifierError("DISCORD_WEBHOOK_URL is not configured")
+
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        response = await client.post(
+            settings.discord_webhook_url,
+            json={"content": content},
+        )
+
+    if response.status_code >= 400:
+        raise NotifierError(f"Discord webhook failed: {response.status_code} {response.text}")
+
+
 async def send_discord_alert(
     *,
     quote: RatioQuote,
@@ -26,26 +40,8 @@ async def send_discord_alert(
         f"Gold ${quote.gold_price:,.2f}/oz · Silver ${quote.silver_price:,.2f}/oz\n"
         f"Source: {quote.source} · Market: {quote.market_state}"
     )
-
-    async with httpx.AsyncClient(timeout=15.0) as client:
-        response = await client.post(
-            settings.discord_webhook_url,
-            json={"content": content},
-        )
-
-    if response.status_code >= 400:
-        raise NotifierError(f"Discord webhook failed: {response.status_code} {response.text}")
+    await send_discord_content(content)
 
 
 async def send_discord_test() -> None:
-    if not settings.discord_webhook_url:
-        raise NotifierError("DISCORD_WEBHOOK_URL is not configured")
-
-    async with httpx.AsyncClient(timeout=15.0) as client:
-        response = await client.post(
-            settings.discord_webhook_url,
-            json={"content": "stock_alert test — Discord webhook is working."},
-        )
-
-    if response.status_code >= 400:
-        raise NotifierError(f"Discord webhook failed: {response.status_code} {response.text}")
+    await send_discord_content("stock_alert test — Discord webhook is working.")

@@ -7,7 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.db import init_db
-from app.routers import alerts, status
+from app.routers import alerts, status, ticker_trends
+from app.trend_worker import trend_loop
 from app.worker import poll_loop
 
 logging.basicConfig(level=logging.INFO)
@@ -16,13 +17,17 @@ logging.basicConfig(level=logging.INFO)
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     await init_db()
-    task = asyncio.create_task(poll_loop())
+    tasks = [asyncio.create_task(poll_loop())]
+    if settings.apewisdom_enabled:
+        tasks.append(asyncio.create_task(trend_loop()))
     yield
-    task.cancel()
-    try:
-        await task
-    except asyncio.CancelledError:
-        pass
+    for task in tasks:
+        task.cancel()
+    for task in tasks:
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
 
 
 app = FastAPI(
@@ -41,3 +46,4 @@ app.add_middleware(
 
 app.include_router(status.router)
 app.include_router(alerts.router)
+app.include_router(ticker_trends.router)

@@ -39,3 +39,12 @@ class RatioRead(BaseModel):
     source: str
     fetched_at: datetime
     market_state: str
+
+
+class TickerTrendRead(BaseModel):
+    ticker: str
+    rank: int
+    mentions: int
+    change_24h: float | None
+    upvotes: int
+    trend_score: float

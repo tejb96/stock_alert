@@ -1,2 +1,4 @@
 .env.frontend
 .env.backend
+
+.pnpm-store/
